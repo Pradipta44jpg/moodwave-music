@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VibeCamera } from "@/components/VibeCamera";
 
 type Props = {
   selected: string | null;
@@ -63,6 +64,21 @@ export function MoodSelector({ selected, onSelect, onGenerate, loading }: Props)
           <Sparkles className="h-4 w-4" />
           {loading ? "Generating..." : "Generate Music"}
         </Button>
+      </div>
+
+      {/* Camera-based mood detection */}
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <div className="flex justify-center">
+        <VibeCamera
+          onMoodDetected={(mood) => {
+            onSelect(mood);
+            onGenerate();
+          }}
+        />
       </div>
     </div>
   );
