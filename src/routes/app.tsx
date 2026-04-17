@@ -7,7 +7,8 @@ import { Playlist } from "@/components/Playlist";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getPlaylist, inferMoodKey, MOODS, type Track } from "@/lib/moods";
+import { getPlaylist, inferMoodKey, LANGUAGES, MOODS, type LanguageKey, type Track } from "@/lib/moods";
+import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ function AppPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [mood, setMood] = useState<string | null>(null);
+  const [language, setLanguage] = useState<LanguageKey>("english");
   const [tracks, setTracks] = useState<Track[]>([]);
   const [index, setIndex] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -50,25 +52,25 @@ function AppPage() {
     if (!mood) return;
     setGenerating(true);
     try {
-      const list = getPlaylist(mood);
-      // Simulate API latency for natural feel
-      await new Promise((r) => setTimeout(r, 500));
+      const list = getPlaylist(mood, language);
+      await new Promise((r) => setTimeout(r, 400));
       setTracks(list);
       setIndex(0);
       if (user) {
         await supabase.from("history").insert({
           user_id: user.id,
-          mood,
+          mood: `${mood} (${language})`,
           playlist: list as any,
         });
       }
-      toast.success(`Tuned for ${moodLabel}`);
+      const langLabel = LANGUAGES.find((l) => l.key === language)?.label;
+      toast.success(`Tuned ${langLabel} for ${moodLabel}`);
     } catch (e: any) {
       toast.error(e.message || "Could not generate playlist");
     } finally {
       setGenerating(false);
     }
-  }, [mood, moodLabel, user]);
+  }, [mood, moodLabel, user, language]);
 
   const toggleFavorite = useCallback(
     async (track: Track) => {
