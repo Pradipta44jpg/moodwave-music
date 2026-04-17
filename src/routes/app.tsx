@@ -7,7 +7,8 @@ import { Playlist } from "@/components/Playlist";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getPlaylist, inferMoodKey, MOODS, type Track } from "@/lib/moods";
+import { getPlaylist, inferMoodKey, LANGUAGES, MOODS, type LanguageKey, type Track } from "@/lib/moods";
+import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ function AppPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [mood, setMood] = useState<string | null>(null);
+  const [language, setLanguage] = useState<LanguageKey>("english");
   const [tracks, setTracks] = useState<Track[]>([]);
   const [index, setIndex] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -50,25 +52,25 @@ function AppPage() {
     if (!mood) return;
     setGenerating(true);
     try {
-      const list = getPlaylist(mood);
-      // Simulate API latency for natural feel
-      await new Promise((r) => setTimeout(r, 500));
+      const list = getPlaylist(mood, language);
+      await new Promise((r) => setTimeout(r, 400));
       setTracks(list);
       setIndex(0);
       if (user) {
         await supabase.from("history").insert({
           user_id: user.id,
-          mood,
+          mood: `${mood} (${language})`,
           playlist: list as any,
         });
       }
-      toast.success(`Tuned for ${moodLabel}`);
+      const langLabel = LANGUAGES.find((l) => l.key === language)?.label;
+      toast.success(`Tuned ${langLabel} for ${moodLabel}`);
     } catch (e: any) {
       toast.error(e.message || "Could not generate playlist");
     } finally {
       setGenerating(false);
     }
-  }, [mood, moodLabel, user]);
+  }, [mood, moodLabel, user, language]);
 
   const toggleFavorite = useCallback(
     async (track: Track) => {
@@ -109,6 +111,31 @@ function AppPage() {
           <p className="mt-1 text-muted-foreground">
             Pick a mood — or describe one — and we'll tune a playlist for it.
           </p>
+
+          <div className="mt-6 space-y-2">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Language</p>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.map((l) => {
+                const active = language === l.key;
+                return (
+                  <button
+                    key={l.key}
+                    onClick={() => setLanguage(l.key)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all",
+                      active
+                        ? "border-primary bg-primary/15 text-foreground shadow-[0_0_20px_-5px_var(--primary)]"
+                        : "border-border bg-card/40 text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <span>{l.flag}</span>
+                    <span>{l.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mt-6">
             <MoodSelector
               selected={mood}
