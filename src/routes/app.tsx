@@ -111,6 +111,31 @@ function AppPage() {
           <p className="mt-1 text-muted-foreground">
             Pick a mood — or describe one — and we'll tune a playlist for it.
           </p>
+
+          <div className="mt-6 space-y-2">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Language</p>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.map((l) => {
+                const active = language === l.key;
+                return (
+                  <button
+                    key={l.key}
+                    onClick={() => setLanguage(l.key)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all",
+                      active
+                        ? "border-primary bg-primary/15 text-foreground shadow-[0_0_20px_-5px_var(--primary)]"
+                        : "border-border bg-card/40 text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <span>{l.flag}</span>
+                    <span>{l.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mt-6">
             <MoodSelector
               selected={mood}
